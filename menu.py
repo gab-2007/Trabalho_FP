@@ -1,4 +1,5 @@
-from Animais import menu_animais
+from animais.Animais import menu_animais
+from registros_cuidados.registrocuidados import menu_registro
 
 
 def mostrar_menu():
@@ -18,6 +19,8 @@ def main():
 
         if opcao == "1":
             menu_animais()
+        elif opcao == "2":
+            menu_registro()
         elif opcao == "0":
             print("Saindo..")
         else:

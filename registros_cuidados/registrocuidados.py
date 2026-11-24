@@ -1,6 +1,10 @@
-from datetime import datetime
 import os
+from datetime import datetime
+
 print(os.path.abspath('registro_cuidados.txt'))
+with open('registro_cuidado.txt','a', encoding='utf-8') as arquivo:
+    pass
+print(os.getcwd())
 with open('registro_cuidado.txt','a', encoding='utf-8') as arquivo:
     pass
 print(os.getcwd())
@@ -157,6 +161,5 @@ def menu_registro():
             break
         else:
             print('Opção inválida!')
-
-
-menu_registro()
+if __name__ == "__main__":
+    menu_registro()

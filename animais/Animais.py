@@ -126,5 +126,5 @@ def menu_animais():
         else:
             print("Opção inválida")
 
-
-menu_animais()
+if __name__ == "__main__":
+    menu_animais()
