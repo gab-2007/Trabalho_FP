@@ -1,0 +1,2 @@
+carlos;humano;loiro;20;bem;28/082006;normal
+anna;humana;loira;21;bem;28/08/28;chata
