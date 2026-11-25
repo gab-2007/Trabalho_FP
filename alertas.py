@@ -1,248 +1,148 @@
-
 from datetime import date, datetime
 
-
+ARQUIVO_ANIMAIS = "animais.txt"
 ARQUIVO_CUIDADOS = "registro_cuidado.txt"
 ARQUIVO_AGENDA = "agenda_alertas.txt"
-ARQUIVO_ANIMAIS = "animais.txt"
 
 
 def ler_animais():
     try:
-        arquivo = open(ARQUIVO_ANIMAIS, "r", encoding="utf-8")
+        with open(ARQUIVO_ANIMAIS, "r", encoding="utf-8") as arquivo:
+            linhas = arquivo.read().splitlines()
     except FileNotFoundError:
         try:
-            arquivo = open("animais/animais.txt", "r", encoding="utf-8")
+            with open("animais/animais.txt", "r", encoding="utf-8") as arquivo:
+                linhas = arquivo.read().splitlines()
         except FileNotFoundError:
             return []
 
-    linhas = arquivo.readlines()
-    arquivo.close()
-
     animais = []
     for linha in linhas:
-        campos = linha.strip().split(";")
+        campos = linha.split(";")
         if len(campos) >= 7:
-            animal = {
-                "nome": campos[0],
-                "especie": campos[1],
-                "raca": campos[2],
-                "idade": campos[3],
-                "saude": campos[4],
-                "chegada": campos[5],
-                "comportamento": campos[6],
-            }
-            animais.append(animal)
+            animais.append(campos)
 
     return animais
 
 
 def ler_agenda():
     try:
-        arquivo = open(ARQUIVO_AGENDA, "r", encoding="utf-8")
+        with open(ARQUIVO_AGENDA, "r", encoding="utf-8") as arquivo:
+            linhas = arquivo.read().splitlines()
     except FileNotFoundError:
         return []
 
-    linhas = arquivo.readlines()
-    arquivo.close()
-
     registros = []
     for linha in linhas:
-        campos = linha.strip().split(";")
+        campos = linha.split(";")
         if len(campos) == 9:
-            registro = {
-                "tipo": campos[0],
-                "data": campos[1],
-                "situacao": campos[2],
-                "nome": campos[3],
-                "especie": campos[4],
-                "raca": campos[5],
-                "idade": campos[6],
-                "saude": campos[7],
-                "comportamento": campos[8],
-            }
-            registros.append(registro)
+            registros.append(campos)
 
     return registros
 
 
 def salvar_agenda(registros):
-    arquivo = open(ARQUIVO_AGENDA, "w", encoding="utf-8")
-
-    for registro in registros:
-        linha = (
-            registro["tipo"] + ";" + registro["data"] + ";"
-            + registro["situacao"] + ";" + registro["nome"] + ";"
-            + registro["especie"] + ";" + registro["raca"] + ";"
-            + registro["idade"] + ";" + registro["saude"] + ";"
-            + registro["comportamento"] + "\n"
-        )
-        arquivo.write(linha)
-
-    arquivo.close()
+    with open(ARQUIVO_AGENDA, "w", encoding="utf-8") as arquivo:
+        for registro in registros:
+            arquivo.write(";".join(registro) + "\n")
 
 
-def pedir_data():
-    while True:
-        texto = input("Data prevista (dd/mm/aaaa): ").strip()
-        try:
-            data = datetime.strptime(texto, "%d/%m/%Y").date()
-            return data.strftime("%d/%m/%Y")
-        except ValueError:
-            print("Data inválida. Use o formato dd/mm/aaaa.")
+def calcular_prazo(data):
+    dias = (data - date.today()).days
 
-
-def carregar_alertas():
-    hoje = date.today()
-    alertas = []
-
-    try:
-        arquivo = open(ARQUIVO_CUIDADOS, "r", encoding="utf-8")
-        linhas = arquivo.readlines()
-        arquivo.close()
-    except FileNotFoundError:
-        linhas = []
-
-    for linha in linhas:
-        partes = linha.strip().split(" | ")
-        if len(partes) >= 3 and partes[1] == "Vacina":
-            texto_data = partes[2].replace("Data da vacina: ", "").strip()
-            try:
-                data = datetime.strptime(texto_data, "%d/%m/%Y").date()
-                dias = (data - hoje).days
-                if dias < 0:
-                    prazo = "atrasado há " + str(-dias) + " dia(s)"
-                elif dias == 0:
-                    prazo = "previsto para hoje"
-                else:
-                    prazo = "previsto em " + str(dias) + " dia(s)"
-
-                alerta = {
-                    "tipo": "Vacina",
-                    "data": data,
-                    "prazo": prazo,
-                    "animal": "Não informado no registro antigo",
-                    "registro": partes[0],
-                    "situacao": "Data registrada",
-                }
-                alertas.append(alerta)
-            except ValueError:
-                continue
-
-    registros = ler_agenda()
-    for registro in registros:
-        if registro["situacao"] == "Pendente":
-            try:
-                data = datetime.strptime(registro["data"], "%d/%m/%Y").date()
-                dias = (data - hoje).days
-                if dias < 0:
-                    prazo = "atrasado há " + str(-dias) + " dia(s)"
-                elif dias == 0:
-                    prazo = "previsto para hoje"
-                else:
-                    prazo = "previsto em " + str(dias) + " dia(s)"
-
-                alerta = {
-                    "tipo": registro["tipo"],
-                    "data": data,
-                    "prazo": prazo,
-                    "animal": registro["nome"],
-                    "registro": registro,
-                    "situacao": registro["situacao"],
-                }
-                alertas.append(alerta)
-            except ValueError:
-                continue
-
-    return alertas
-
-
-def cadastrar_previsao():
-    animais = ler_animais()
-    if len(animais) == 0:
-        print("Cadastre um animal antes de registrar uma previsão.")
-        return
-
-    print("\n--- ANIMAIS ---")
-    numero = 1
-    for animal in animais:
-        print("[" + str(numero) + "] " + animal["nome"] + " | " + animal["especie"])
-        numero = numero + 1
-
-    try:
-        numero = int(input("Número do animal: "))
-    except ValueError:
-        print("Digite um número válido.")
-        return
-
-    if numero < 1 or numero > len(animais):
-        print("Esse animal não existe.")
-        return
-
-    animal = animais[numero - 1]
-    tipo = input("Cuidado (Consulta/Banho/Tosa/Vacina/Outro cuidado): ").strip().capitalize()
-    tipos_validos = ["Consulta", "Banho", "Tosa", "Vacina", "Outro cuidado"]
-
-    if tipo not in tipos_validos:
-        print("Tipo de cuidado inválido.")
-        return
-
-    data = pedir_data()
-    registros = ler_agenda()
-    registro = {
-        "tipo": tipo,
-        "data": data,
-        "situacao": "Pendente",
-        "nome": animal["nome"],
-        "especie": animal["especie"],
-        "raca": animal["raca"],
-        "idade": animal["idade"],
-        "saude": animal["saude"],
-        "comportamento": animal["comportamento"],
-    }
-    registros.append(registro)
-    salvar_agenda(registros)
-    print("Previsão registrada como pendente.")
+    if dias < 0:
+        return "atrasado há " + str(-dias) + " dia(s)"
+    elif dias == 0:
+        return "previsto para hoje"
+    else:
+        return "previsto em " + str(dias) + " dia(s)"
 
 
 def mostrar_detalhes(alerta):
     print("\n--- DETALHES DO ALERTA ---")
-    print("Cuidado: " + alerta["tipo"])
-    print("Data prevista: " + alerta["data"].strftime("%d/%m/%Y"))
-    print("Prazo: " + alerta["prazo"])
+    print("Cuidado:", alerta[0])
+    print("Data prevista:", alerta[1].strftime("%d/%m/%Y"))
+    print("Prazo:", alerta[2])
 
-    if alerta["animal"] == "Não informado no registro antigo":
+    if alerta[3] == "Não informado no registro antigo":
         print("Animal: não informado no registro antigo.")
-        print("Registro: " + alerta["registro"])
+        print("Registro:", alerta[4])
     else:
-        animal = alerta["registro"]
-        print("Animal: " + animal["nome"])
-        print("Espécie: " + animal["especie"])
-        print("Raça: " + animal["raca"])
-        print("Idade: " + animal["idade"])
-        print("Saúde: " + animal["saude"])
-        print("Comportamento: " + animal["comportamento"])
+        animal = alerta[4]
+        print("Animal:", animal[3])
+        print("Espécie:", animal[4])
+        print("Raça:", animal[5])
+        print("Idade:", animal[6])
+        print("Saúde:", animal[7])
+        print("Comportamento:", animal[8])
 
 
 def mostrar_alertas():
-    alertas = carregar_alertas()
+    alertas = []
+
+    try:
+        with open(ARQUIVO_CUIDADOS, "r", encoding="utf-8") as arquivo:
+            cuidados = arquivo.read().splitlines()
+    except FileNotFoundError:
+        cuidados = []
+
+    for linha in cuidados:
+        campos = linha.split(" | ")
+
+        if len(campos) >= 3 and campos[1] == "Vacina":
+            texto_data = campos[2].replace("Data da vacina: ", "").strip()
+
+            try:
+                data = datetime.strptime(texto_data, "%d/%m/%Y").date()
+            except ValueError:
+                continue
+
+            alerta = [
+                "Vacina",
+                data,
+                calcular_prazo(data),
+                "Não informado no registro antigo",
+                campos[0],
+            ]
+            alertas.append(alerta)
+
+    registros = ler_agenda()
+
+    for registro in registros:
+        if registro[2] == "Pendente":
+            try:
+                data = datetime.strptime(registro[1], "%d/%m/%Y").date()
+            except ValueError:
+                continue
+
+            alerta = [
+                registro[0],
+                data,
+                calcular_prazo(data),
+                registro[3],
+                registro,
+            ]
+            alertas.append(alerta)
+
     if len(alertas) == 0:
         print("Nenhum alerta com data prevista foi encontrado.")
         return
 
     print("\n--- ALERTAS ---")
     numero = 1
+
     for alerta in alertas:
-        data = alerta["data"].strftime("%d/%m/%Y")
-        texto = (
-            "[" + str(numero) + "] " + alerta["tipo"] + " | "
-            + alerta["animal"] + " | " + data + " | " + alerta["prazo"]
+        print(
+            "[" + str(numero) + "] " + alerta[0]
+            + " | " + alerta[3]
+            + " | " + alerta[1].strftime("%d/%m/%Y")
+            + " | " + alerta[2]
         )
-        print(texto)
         numero = numero + 1
 
     while True:
         opcao = input("[1] Ver detalhes  [0] Voltar: ").strip()
+
         if opcao == "0":
             return
         elif opcao == "1":
@@ -260,7 +160,76 @@ def mostrar_alertas():
             print("Opção inválida.")
 
 
+def registrar_previsao():
+    animais = ler_animais()
+
+    if len(animais) == 0:
+        print("Cadastre um animal antes de registrar uma previsão.")
+        return
+
+    print("\n--- ANIMAIS ---")
+    numero = 1
+    for animal in animais:
+        print("[" + str(numero) + "] " + animal[0] + " | " + animal[1])
+        numero = numero + 1
+
+    try:
+        numero = int(input("Número do animal: "))
+    except ValueError:
+        print("Digite um número válido.")
+        return
+
+    if numero < 1 or numero > len(animais):
+        print("Esse animal não existe.")
+        return
+
+    animal = animais[numero - 1]
+    tipo = input(
+        "Cuidado (Consulta/Banho/Tosa/Vacina/Outro cuidado): "
+    ).strip().capitalize()
+    tipos_validos = ["Consulta", "Banho", "Tosa", "Vacina", "Outro cuidado"]
+
+    if tipo not in tipos_validos:
+        print("Tipo de cuidado inválido.")
+        return
+
+    while True:
+        texto_data = input("Data prevista (dd/mm/aaaa): ").strip()
+
+        try:
+            data = datetime.strptime(texto_data, "%d/%m/%Y").date()
+        except ValueError:
+            print("Data inválida. Use o formato dd/mm/aaaa.")
+            continue
+
+        if data < date.today():
+            print("A data prevista já passou.")
+            continue
+
+        break
+
+    registro = [
+        tipo,
+        data.strftime("%d/%m/%Y"),
+        "Pendente",
+        animal[0],
+        animal[1],
+        animal[2],
+        animal[3],
+        animal[4],
+        animal[6],
+    ]
+
+    registros = ler_agenda()
+    registros.append(registro)
+    salvar_agenda(registros)
+    print("Previsão registrada como pendente.")
+
+
 def menu_alertas():
+    with open(ARQUIVO_AGENDA, "a", encoding="utf-8") as arquivo:
+        pass
+
     while True:
         print("\n--- VER ALERTAS ---")
         print("[1] Ver alertas  [2] Registrar previsão  [0] Voltar")
@@ -269,7 +238,7 @@ def menu_alertas():
         if opcao == "1":
             mostrar_alertas()
         elif opcao == "2":
-            cadastrar_previsao()
+            registrar_previsao()
         elif opcao == "0":
             return
         else:
