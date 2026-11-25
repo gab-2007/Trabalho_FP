@@ -55,3 +55,67 @@ def registrar_adocao():
         return
 
     linha = nome_animal + ";" + adotante + ";" + data
+    adocoes.append(linha)
+    salvar_adocoes(adocoes)
+    print("Adoção registrada!")
+
+
+def listar_adocoes():
+    adocoes = ler_adocoes()
+    if len(adocoes) == 0:
+        print("Nenhuma adoção registrada.")
+        return
+
+    numero = 1
+    for linha in adocoes:
+        partes = linha.split(";")
+        print(numero, "- Animal:", partes[0], "| Adotante:", partes[1], "| Data:", partes[2])
+        numero = numero + 1
+
+
+def ver_historico():
+    adocoes = ler_adocoes()
+    if len(adocoes) == 0:
+        print("Nenhuma adoção registrada.")
+        return
+
+    # Mostra todas as adoções de um adotante
+    nome = input("Nome do adotante: ").strip()
+
+    encontrou = False
+    for linha in adocoes:
+        partes = linha.split(";")
+        # .lower() ignora maiúscula/minúscula
+        if partes[1].lower() == nome.lower():
+            print("- Adotou", partes[0], "em", partes[2])
+            encontrou = True
+
+    if encontrou == False:
+        print("Esse adotante não tem adoções registradas.")
+
+
+def menu_adocoes():
+    opcao = ""
+    while opcao != "0":
+        print("""
+        [1] Registrar adoção
+        [2] Listar adoções
+        [3] Ver histórico
+        [0] Voltar
+        """)
+        opcao = input("Digite uma opção: ")
+
+        if opcao == "1":
+            registrar_adocao()
+        elif opcao == "2":
+            listar_adocoes()
+        elif opcao == "3":
+            ver_historico()
+        elif opcao == "0":
+            print("Voltando...")
+        else:
+            print("Opção inválida")
+
+
+if __name__ == "__main__":
+    menu_adocoes()
