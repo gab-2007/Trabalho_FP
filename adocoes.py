@@ -1,93 +1,149 @@
+from datetime import datetime
+
 ARQUIVO_ADOCOES = "adocoes.txt"
 ARQUIVO_ANIMAIS = "animais.txt"
+
+
+def ler_animais():
+    try:
+        with open(ARQUIVO_ANIMAIS, "r", encoding="utf-8") as arquivo:
+            linhas = arquivo.readlines()
+    except FileNotFoundError:
+        try:
+            with open("animais/animais.txt", "r", encoding="utf-8") as arquivo:
+                linhas = arquivo.readlines()
+        except FileNotFoundError:
+            return []
+
+    animais = []
+
+    for linha in linhas:
+        campos = linha.strip().split(";")
+        if len(campos) >= 7:
+            animais.append(linha.strip())
+
+    return animais
+
 
 def ler_adocoes():
     try:
         with open(ARQUIVO_ADOCOES, "r", encoding="utf-8") as arquivo:
-            linhas = arquivo. read().splitlines()
-        return linhas
-    except FileNotFoundError:
-        return[]
-
-def salvar_adocoes(linhas):
-    with open(ARQUIVO_ADOCOES, "w", encoding="utf-8") as arquivo:
-        arquivo.writelines(linha + "\n" for linha in linhas)
-def ler_animais():
-    try:
-        with open(ARQUIVO_ANIMAIS, "r", encoding="utf-8") as arquivo:
-            linhas = arquivo.read().splitlines()
-        return linhas
+            linhas = arquivo.readlines()
     except FileNotFoundError:
         return []
+
+    adocoes = []
+
+    for linha in linhas:
+        campos = linha.strip().split(";")
+        if len(campos) >= 3:
+            adocoes.append(";".join(campos[:3]))
+
+    return adocoes
+
+
+def salvar_adocoes(adocoes):
+    with open(ARQUIVO_ADOCOES, "w", encoding="utf-8") as arquivo:
+        for adocao in adocoes:
+            arquivo.write(adocao + "\n")
+
+
 def registrar_adocao():
     animais = ler_animais()
+
     if len(animais) == 0:
         print("Nenhum animal cadastrado. Cadastre um animal primeiro.")
         return
-    print("Animais cadastrados:")
+
+    print("\n--- ANIMAIS CADASTRADOS ---")
+
     numero = 1
     for linha in animais:
-        partes = linha.split(";")
-        print(numero, "-", partes[0], "|", partes[1], "|", partes[2])
+        campos = linha.split(";")
+        print(numero, "-", campos[0], "|", campos[1], "|", campos[2])
         numero = numero + 1
+
     try:
         escolha = int(input("Número do animal que será adotado: "))
     except ValueError:
-        print("Digite apenas números!")
+        print("Digite apenas números.")
         return
 
     if escolha < 1 or escolha > len(animais):
-        print("Esse número não existe!")
+        print("Esse número não existe.")
         return
-    nome_animal = animais[escolha - 1].split(";")[0]
 
+    campos_animal = animais[escolha - 1].split(";")
+    nome_animal = campos_animal[0]
     adocoes = ler_adocoes()
-    for linha in adocoes:
-        partes = linha.split(";")
-        if partes[0].lower() == nome_animal.lower():
-            print("Esse animal já foi adotado!")
-            return
-    adotante = input("Nome do adotante: ").strip()
-    data = input("Data da adoção (dd/mm/aaaa): ").strip()
 
-    if adotante == "" or data == "":
-        print("Erro: todos os campos são obrigatórios!")
+    for linha in adocoes:
+        campos_adocao = linha.split(";")
+        if campos_adocao[0].lower() == nome_animal.lower():
+            print("Esse animal já foi adotado.")
+            return
+
+    adotante = input("Nome do adotante: ").strip()
+
+    if adotante == "":
+        print("O nome do adotante é obrigatório.")
         return
 
-    linha = nome_animal + ";" + adotante + ";" + data
-    adocoes.append(linha)
+    while True:
+        data = input("Data da adoção (dd/mm/aaaa): ").strip()
+
+        try:
+            datetime.strptime(data, "%d/%m/%Y")
+            break
+        except ValueError:
+            print("Data inválida. Use o formato dd/mm/aaaa.")
+
+    adocao = nome_animal + ";" + adotante + ";" + data
+    adocoes.append(adocao)
     salvar_adocoes(adocoes)
-    print("Adoção registrada!")
+    print("Adoção registrada.")
 
 
 def listar_adocoes():
     adocoes = ler_adocoes()
+
     if len(adocoes) == 0:
         print("Nenhuma adoção registrada.")
         return
 
+    print("\n--- ADOÇÕES REGISTRADAS ---")
+
     numero = 1
     for linha in adocoes:
-        partes = linha.split(";")
-        print(numero, "- Animal:", partes[0], "| Adotante:", partes[1], "| Data:", partes[2])
+        campos = linha.split(";")
+        print(
+            numero,
+            "- Animal:", campos[0],
+            "| Adotante:", campos[1],
+            "| Data:", campos[2]
+        )
         numero = numero + 1
 
 
 def ver_historico():
     adocoes = ler_adocoes()
+
     if len(adocoes) == 0:
         print("Nenhuma adoção registrada.")
         return
 
-    # Mostra todas as adoções de um adotante
     nome = input("Nome do adotante: ").strip()
 
+    if nome == "":
+        print("Digite o nome do adotante.")
+        return
+
     encontrou = False
+
     for linha in adocoes:
-        partes = linha.split(";")
-        # .lower() ignora maiúscula/minúscula
-        if partes[1].lower() == nome.lower():
-            print("- Adotou", partes[0], "em", partes[2])
+        campos = linha.split(";")
+        if campos[1].lower() == nome.lower():
+            print("- Adotou", campos[0], "em", campos[2])
             encontrou = True
 
     if encontrou == False:
@@ -96,6 +152,7 @@ def ver_historico():
 
 def menu_adocoes():
     opcao = ""
+
     while opcao != "0":
         print("""
         [1] Registrar adoção
@@ -103,6 +160,7 @@ def menu_adocoes():
         [3] Ver histórico
         [0] Voltar
         """)
+
         opcao = input("Digite uma opção: ")
 
         if opcao == "1":
@@ -114,7 +172,7 @@ def menu_adocoes():
         elif opcao == "0":
             print("Voltando...")
         else:
-            print("Opção inválida")
+            print("Opção inválida.")
 
 
 if __name__ == "__main__":
